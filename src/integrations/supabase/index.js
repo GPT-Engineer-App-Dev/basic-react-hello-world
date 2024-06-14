@@ -1,64 +1,175 @@
 import { createClient } from '@supabase/supabase-js';
-import { useQuery, useMutation, useQueryClient, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, useQuery, useMutation } from '@tanstack/react-query';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_PROJECT_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_API_KEY;
-export const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-import React from "react";
-export const queryClient = new QueryClient();
-export function SupabaseProvider({ children }) {
-    return React.createElement(QueryClientProvider, { client: queryClient }, children);
-}
+const queryClient = new QueryClient();
 
-const fromSupabase = async (query) => {
-    const { data, error } = await query;
+/**
+ * Types for Supabase tables
+ * 
+ * Table: users
+ * Columns:
+ * - id: uuid
+ * - username: text
+ * - email: text
+ * - created_at: timestamp
+ * 
+ * Table: posts
+ * Columns:
+ * - id: uuid
+ * - user_id: uuid
+ * - title: text
+ * - content: text
+ * - created_at: timestamp
+ * 
+ * Table: comments
+ * Columns:
+ * - id: uuid
+ * - post_id: uuid
+ * - user_id: uuid
+ * - content: text
+ * - created_at: timestamp
+ */
+
+// Hooks for users table
+export const useUsers = () => useQuery({
+  queryKey: ['users'],
+  queryFn: async () => {
+    const { data, error } = await supabase.from('users').select('*');
     if (error) throw new Error(error.message);
     return data;
-};
+  }
+});
 
-/* supabase integration types
+export const useUser = (id) => useQuery({
+  queryKey: ['user', id],
+  queryFn: async () => {
+    const { data, error } = await supabase.from('users').select('*').eq('id', id).single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+});
 
-// EXAMPLE TYPES SECTION
-// DO NOT USE TYPESCRIPT
+export const useCreateUser = () => useMutation({
+  mutationFn: async (newUser) => {
+    const { data, error } = await supabase.from('users').insert(newUser);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('users')
+});
 
-Foo // table: foos
-    id: number
-    title: string
+export const useUpdateUser = () => useMutation({
+  mutationFn: async (updatedUser) => {
+    const { data, error } = await supabase.from('users').update(updatedUser).eq('id', updatedUser.id);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('users')
+});
 
-Bar // table: bars
-    id: number
-    foo_id: number // foreign key to Foo
-	
-*/
+export const useDeleteUser = () => useMutation({
+  mutationFn: async (id) => {
+    const { data, error } = await supabase.from('users').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('users')
+});
 
-// Example hook for models
+// Hooks for posts table
+export const usePosts = () => useQuery({
+  queryKey: ['posts'],
+  queryFn: async () => {
+    const { data, error } = await supabase.from('posts').select('*');
+    if (error) throw new Error(error.message);
+    return data;
+  }
+});
 
-export const useFoo = ()=> useQuery({
-    queryKey: ['foo'],
-    queryFn: fromSupabase(supabase.from('foo')),
-})
-export const useAddFoo = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: (newFoo)=> fromSupabase(supabase.from('foo').insert([{ title: newFoo.title }])),
-        onSuccess: ()=> {
-            queryClient.invalidateQueries('foo');
-        },
-    });
-};
+export const usePost = (id) => useQuery({
+  queryKey: ['post', id],
+  queryFn: async () => {
+    const { data, error } = await supabase.from('posts').select('*').eq('id', id).single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+});
 
-export const useBar = ()=> useQuery({
-    queryKey: ['bar'],
-    queryFn: fromSupabase(supabase.from('bar')),
-})
-export const useAddBar = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: (newBar)=> fromSupabase(supabase.from('bar').insert([{ foo_id: newBar.foo_id }])),
-        onSuccess: ()=> {
-            queryClient.invalidateQueries('bar');
-        },
-    });
-};
+export const useCreatePost = () => useMutation({
+  mutationFn: async (newPost) => {
+    const { data, error } = await supabase.from('posts').insert(newPost);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('posts')
+});
 
+export const useUpdatePost = () => useMutation({
+  mutationFn: async (updatedPost) => {
+    const { data, error } = await supabase.from('posts').update(updatedPost).eq('id', updatedPost.id);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('posts')
+});
+
+export const useDeletePost = () => useMutation({
+  mutationFn: async (id) => {
+    const { data, error } = await supabase.from('posts').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('posts')
+});
+
+// Hooks for comments table
+export const useComments = () => useQuery({
+  queryKey: ['comments'],
+  queryFn: async () => {
+    const { data, error } = await supabase.from('comments').select('*');
+    if (error) throw new Error(error.message);
+    return data;
+  }
+});
+
+export const useComment = (id) => useQuery({
+  queryKey: ['comment', id],
+  queryFn: async () => {
+    const { data, error } = await supabase.from('comments').select('*').eq('id', id).single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+});
+
+export const useCreateComment = () => useMutation({
+  mutationFn: async (newComment) => {
+    const { data, error } = await supabase.from('comments').insert(newComment);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('comments')
+});
+
+export const useUpdateComment = () => useMutation({
+  mutationFn: async (updatedComment) => {
+    const { data, error } = await supabase.from('comments').update(updatedComment).eq('id', updatedComment.id);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('comments')
+});
+
+export const useDeleteComment = () => useMutation({
+  mutationFn: async (id) => {
+    const { data, error } = await supabase.from('comments').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    return data;
+  },
+  onSuccess: () => queryClient.invalidateQueries('comments')
+});
+
+export { supabase, queryClient };
